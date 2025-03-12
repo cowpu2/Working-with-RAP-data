@@ -1,0 +1,213 @@
+---
+title: "RAP_Download"
+author: "Mike Proctor"
+format: 
+  html: default
+editor: visual
+---
+
+## Load libraries and set up folder paths
+
+```{r}
+#| label: setup
+suppressWarnings({  # Just so we don't get a bunch of unnecessary messages on render
+suppressPackageStartupMessages(library(tidyverse)) 
+suppressMessages(library(rprojroot))
+suppressMessages(library(sf))
+suppressMessages(library(terra))
+suppressMessages(library(tidyterra))
+})
+
+## Local stuff  =================
+base_path       <- find_rstudio_root_file()                     
+source_path     <- file.path(base_path, "source_data//")          
+dat_path        <- file.path(base_path, "dat_output//")            
+plot_path       <- file.path(base_path, "plots//")                 
+csv_path        <- file.path(base_path, "csv_output//")
+```
+
+## Install and load the [rapr](https://humus.rocks/rapr/reference/get_rap.html) package
+
+```{r rapr}
+#| label: rapr
+
+#remotes::install_github("brownag/rapr")
+library(rapr)
+
+```
+
+Make sure there is a "source_data" folder within this project - whereever you saved it locally. The following line will create one in the correct location.
+
+```{r folder}
+ifelse(!dir.exists("source_data"), dir.create("source_data"), "Folder exists already")
+```
+
+## Download Fire Perimeter [dataset](https://data-nifc.opendata.arcgis.com/datasets/5b3ff19978be49208d41a9d9a461ecfb/about) from NIFC 
+
+Save this in the "source_data" folder created above.
+
+## Load and filter dataset to get Ferguson fire @ WMNWR in 2011
+```{r}
+#| label: perimeter
+#| include: false
+
+# There's only one layer so we don't have to specify any for st_read
+st_layers(paste0(source_path, "Historic_Geomac_Perimeters_Combined_2000_2018_-7007592357689317076.gpkg"))
+
+Fires <- st_read(paste0(source_path, "Historic_Geomac_Perimeters_Combined_2000_2018_-7007592357689317076.gpkg"))
+
+Ferguson <- Fires |> filter(incidentname == "Ferguson" & state == "OK")
+
+Ferguson <- sf::st_transform(Ferguson, crs = 4326) # Set crs so it lines up with RAP
+#st_crs(Ferguson)
+
+```
+# Download RAP data 
+
+The get_rap() function calculates the extent of the polygon (Ferguson) and uses that as an AOI.
+
+Plot the rap layers along with the Ferguson perimeter to make sure they land right - no crs issues.  Downloads all of the cover layers but filters to only the tree cover layers
+
+
+```{r GetRap}
+#| echo: false
+
+res <- get_rap(
+  Ferguson, # creates a bounding box of this polygon - you can specify a bounding box - see docs
+  version = "v3",
+  years = c(2010:2012),
+#  filename = "RAP.tif",
+  product = "vegetation-cover", # other option here is "vegetation-biomass"
+  progress = TRUE
+)
+
+#st_crs(res) # check crs 
+
+
+#Layers <- names(res)# This gets the name of the indexed layer https://rspatial.github.io/terra/reference/as.list.html
+Layers <- as.data.frame(names(res)) |> filter(str_detect(names(res), "^tree")) # only interested in the tree layers
+
+for (i in Layers) {
+  
+  #This loops through all of the layers 
+  spatter <- res |> tidyterra::select(all_of(i))# https://dieghernan.github.io/tidyterra/index.html
+
+    # Parse out parts of layer names 
+  category <- str_extract(i, "[a-z]+")
+  stat <- str_extract(i, "[a-z]+_[0-9]+_[a-z][0-9]+$") |> str_extract("[a-z]+")
+  layerdate <- str_extract(i, "[0-9]+") |> str_remove("_")
+  
+  #plotTitle <- toupper(paste0(category, "_", stat, "_", layerdate))
+  
+  #print(plotTitle)
+  
+  
+    plot_name<- 
+  ggplot() +
+  tidyterra::geom_spatraster(data = spatter) +
+  geom_sf(data = Ferguson, color = "green", fill = "transparent") +
+  theme(legend.position = "none",
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+  ggtitle("2011 Ferguson Fire Perimeter") +
+      facet_wrap(~lyr)
+
+print(plot_name)
+  
+  
+}
+
+  
+```
+
+
+#  Buffer the perimeter 
+
+Used -100m to avoid edge effects from roads, firebreaks etc. If I were working with movement data(GPS collars) of animals, I'd probably use a positive number and consider movement range or territory size to sort out what value to use. If the buffer is larger than the original polygon, use it in the first argument in get_rap() instead of the original.  In reality -100m is probably too much but it makes it easier to see the buffer when plotting at this scale.  The red line is the original Ferguson perimeter, the tan is the buffered perimeter, and the green is the difference between the two - what we buffered out.
+
+```{r}
+#| label: buffer
+#| echo: false
+
+# set crs back to WGS84/UTM zone 14 - makes the math work better
+Ferguson <- sf::st_transform(Ferguson, crs = 32614) 
+
+Ferguson_buffered_100 <- Ferguson |> sf::st_buffer(dist = -100)
+#st_crs(Ferguson)
+
+
+plot_name<- 
+  ggplot() +
+  geom_sf(data = Ferguson, col = "red",  fill = "green") +
+  geom_sf(data = Ferguson_buffered_100, color = "white", fill = "tan") +
+  theme(legend.position = "none",
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+  ggtitle("2011 Ferguson Fire Perimeter with -100m buffer")
+    
+
+print(plot_name)
+
+```
+
+Mask RAP layers to buffer
+
+```{r}
+#| label: mask
+
+reProSpatter <- project(spatter, "EPSG:32614") # Has to match the polygon were using for the mask
+# st_crs(rapRaster)
+# st_crs(Ferguson)
+
+#names(reProSpatter)
+
+for (k in names(reProSpatter)) {
+  
+rapRaster <- reProSpatter[[k]]
+
+maskedRap <- mask(rapRaster[[k]]
+     , Ferguson_buffered_100
+     , inverse=FALSE
+     , updatevalue=NA
+     , touches=TRUE
+    # , filename=paste0(plot_path, k, ".tif")
+     )
+df <- maskedRap
+df_name <- paste(k)
+#assign(df_name, df, envir = .GlobalEnv) # pull out individual layers to environment
+
+#plot(df, main = df_name)
+
+plot_name<- 
+  ggplot() +
+  geom_spatraster(data = df) +
+  scale_fill_viridis_c( na.value = "transparent", limits = c(NA, 100)) +
+  #geom_sf(data = Ferguson_buffered_100, color = "red", alpha = 100) +
+  #theme(legend.position = "none") +
+    labs(
+    fill = "",
+    title = paste0("Ferguson Fire 2011"),
+    subtitle = k
+  )
+  
+print(plot_name)  
+
+}
+
+
+```
+
+
+Histograms
+
+Focal means
+
+Create some random sites
+
+Extract RAP based on sites
