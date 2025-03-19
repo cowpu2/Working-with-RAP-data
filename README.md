@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 # Download, process, and extract RAP data for specific sites
+=======
+# Download and extract Rangeland Analysis Platform data for specific
+sites
+>>>>>>> 1c5a909380d6fbf825309eb399d5ed6380b057df
 Mike Proctor
 2025-03-19
 
