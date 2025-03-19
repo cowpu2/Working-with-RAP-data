@@ -4,6 +4,7 @@ author: "Mike Proctor"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 format: 
   html: default
+  gfm: default
 editor: source
 toc: true
 code-annotations: select
