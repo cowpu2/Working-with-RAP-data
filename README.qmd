@@ -1,9 +1,10 @@
 ---
-title: "Download and extract Rangeland Analysis Platform data for specific sites"
+title: "Download, process, and extract RAP data for specific sites"
 author: "Mike Proctor"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 format: 
   html: default
+  gfm: default
 editor: source
 toc: true
 code-annotations: select
