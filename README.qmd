@@ -1,17 +1,21 @@
 ---
-title: "RAP_Download"
+title: "Download and extract Rangeland Analysis Platform data for specific sites"
 author: "Mike Proctor"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
 format: 
   html: default
-editor: visual
+editor: source
 toc: true
 code-annotations: select
 code-copy: hover
+bibliography: grateful-refs.bib
 ---
 
 [Rangeland Analysis Platform](https://rangelands.app/)
 
 ## Load libraries and set up folder paths
+
+Code uses rprojroot library which needs to be run within a project in RStudio.
 
 ```{r}
 #| label: setup
@@ -23,6 +27,7 @@ suppressMessages(library(terra))
 suppressMessages(library(tidyterra))
 suppressMessages(library(reactable))
 suppressMessages(library(reactablefmtr))
+suppressMessages(library(grateful))
 })
 
 ## Local stuff  =================
@@ -52,15 +57,15 @@ ifelse(!dir.exists("source_data"), dir.create("source_data"), "Folder exists alr
 
 Save this in the "source_data" folder created above.
 
-## Load the fire perimeter data   
+## Load the fire perimeter data
 
 ```{r}
 #| label: perimeter
 #| echo: true
 
 # There's only one layer so we don't have to specify layer name for st_read
-st_layers(paste0(source_path, 
-                 "Historic_Geomac_Perimeters_Combined_2000_2018_-7007592357689317076.gpkg"))
+# st_layers(paste0(source_path, 
+#                  "Historic_Geomac_Perimeters_Combined_2000_2018_-7007592357689317076.gpkg"))
 
 Fires <- st_read(paste0(source_path,
                         "Historic_Geomac_Perimeters_Combined_2000_2018_-7007592357689317076.gpkg"))
@@ -82,16 +87,14 @@ Ferguson <- sf::st_transform(Ferguson, crs = 4326) # Set crs so it lines up with
 
 ```
 
-# Download RAP data
+## Download RAP data
 
 The get_rap() function calculates the extent of the polygon (Ferguson) and uses that as an AOI.
 
 Plot the rap layers along with the Ferguson perimeter to make sure they land right - no crs issues. Downloads all of the cover layers but filters to only the tree cover layers
 
-You can already see some differences between the years.
-
 ```{r GetRap}
-#| echo: false
+#| echo: true
 
 # Turn this off after running the first time so you don't spam the server
 res <- get_rap(
@@ -100,14 +103,19 @@ res <- get_rap(
   years = c(2010:2012),
 #  filename = "RAP.tif",
   product = "vegetation-cover", # other option here is "vegetation-biomass"
-  progress = TRUE
+  progress = FALSE
 )
 
 #st_crs(res) # check crs 
 
-#TODO 
-split this chunk so I can turn off the progress display  
+```
 
+## Plot the RAP data just to check
+
+You can already see some differences between the years.
+
+```{r PlotRap}
+#| echo: true
 #Layers <- names(res)# This gets the name of the indexed layer https://rspatial.github.io/terra/reference/as.list.html
 Layers <- as.data.frame(names(res)) |> 
           filter(str_detect(names(res), "^tree")) # only interested in the tree layers
@@ -143,7 +151,7 @@ print(plot_name)
   
 ```
 
-# Buffer the perimeter
+## Buffer the perimeter
 
 Used -100m to avoid edge effects from roads, firebreaks etc. If I were working with movement data(GPS collars) of animals, I'd probably use a positive number and consider movement range or territory size to sort out what value to use. If the buffer is larger than the original polygon, use it in the first argument in get_rap() instead of the original. In reality -100m is probably too much but it makes it easier to see the buffer when plotting at this scale. The red line is the original Ferguson perimeter, the tan is the buffered perimeter, and the green is the difference between the two - what we buffered out.
 
@@ -175,7 +183,7 @@ print(plot_name)
 
 ```
 
-# Mask RAP layers to buffer
+## Mask RAP layers to buffer
 
 ```{r}
 #| label: mask
@@ -206,8 +214,7 @@ layerList[[k]] <- df_name # Create a list of the layer names while we're at it
 }
 ```
 
-
-# Plot the masked layers
+## Plot the masked layers
 
 ```{r}
 #| label: Plot mask
@@ -226,16 +233,17 @@ plot_name <-
     labs(
     fill = "",
     title = paste0("Ferguson Fire 2011"),
-    subtitle = k
+    subtitle = z
   )
 print(plot_name)  
 }
 
 ```
 
-# Create Histograms of the plots
+## Create Histograms
 
 We can definitely see some changes between years now.
+
 ```{r}
 #| label: histogram
 
@@ -250,10 +258,10 @@ hist(get(y)
 }
 ```
 
+## Calculate and plot focal means for each layer
 
-# Calculate and plot focal means for each layer
+Calculating the mean across a 15X15 matrix and storing that value in the middle pixel of that matrix. The resolution of the imagery comes into play here - RAP has 30m resolution so a 15X15 matrix represents a 450mX450 area on the ground. Size and mobility/territoriality of a target organism might influence the choice of matrix size as well. I chose 15X15 just for dramatic effect - makes it easier to see the change.
 
-Calculating the mean across a 3X3 matrix and storing that value in the middle pixel of that matrix.  The resolution of the imagery comes into play here - RAP has 30m resolution so a 3X3 matrix represents a 90mX90m area on the ground.  Size and mobility/territoriality of a target organism might influence the choice of matrix size as well.
 ```{r}
 #| label: focal mean
 focalities <- list()
@@ -262,13 +270,15 @@ for (n in layerList) {
   focalities[[n]] <- 
     focal(
       get(n),
-      w = matrix(1, nrow = 3, ncol = 3),
+      w = matrix(1, nrow = 15, ncol = 15),
+      #w = matrix(1, nrow = 3, ncol = 3),
       fun = mean,
       na.rm = FALSE)
   
-  plot_name <- 
+  plot_name <- # We're plotting as we calculate the focal mean for each layer
   ggplot() +
-  geom_spatraster(data = get(n)) +
+  #geom_spatraster(data = get(n)) +
+  geom_spatraster(data = focalities[[n]]) +
   scale_fill_viridis_c( na.value = "transparent", limits = c(NA, 100)) +
   theme(#legend.position = "none",
         axis.title.x    = element_blank(),
@@ -280,13 +290,12 @@ for (n in layerList) {
     fill = "",
     title = n,
     subtitle = "Focal Mean"
-  )
+        )
   
 print(plot_name)  
 }
 
 ```
-
 
 ## Create some random sites and pretend they are acoustic or camera trap sites.
 
@@ -320,7 +329,7 @@ print(plot_name)
 
 ```
 
-## Extract RAP based on sites 
+## Extract RAP based on sites
 
 ```{r}
 #| label: Extract Rap
@@ -340,8 +349,10 @@ Focal_df <- bind_rows(Focal_df) |> # converts from a list to a single data frame
             rename("SiteID" = "ID")
 ```
 
-## We'll need to rearrange the data frame a bit for the plot.  
+## We'll need to rearrange the data frame a bit for the plot.
+
 First we'll pivot the year and focal mean value into two columns then we'll clean up the data in the year column so that it only has the year.
+
 ```{r}
 #| label: pivot
 
@@ -363,9 +374,10 @@ reactable(Focal_separate) |> add_title(title = "Focal Mean Values") |>
   add_subtitle((subtitle = "Acoustic and Camera Trap Sites"))
 
 ```
-# Plot a line graph of the data for all sites and years
 
-There's an obvious decline in woody cover over our study period although some weird stuff is happening in 2011 - the year of the fire.  Why?  Quite a lot of things could be causing problems.  Were this earlier in the season with higher preciptation some of those large oaks could have leafed back out and new leaves might have fooled the sensors into reporting greener values than were the case.  Trees often die over an extended period of time when stressed by fire - some of the those trees were dead, they just didn't know it yet.  Fire intensity is likely a factor in how stressed a tree gets, so may influence how fast they die.  If those factors don't confuse issues enough, we should consider how the data gets collected.  RAP data incorporates multiple imagery passes as well as physical "on the ground" vegetation sampling.  These occur over time and can't really be sorted out from a single image.  Some may have occurred prior to the fire and others afterward. So how do we deal with the 2011 data?  You're research question is likely to be something to the effect of "What is the response of "X" to the fire?", so you really just need to know what the conditions were prior to the fire versus after - you may not need to fool with the 2011 data.
+## Plot a line graph of the data for all sites and years
+
+There's an obvious decline in woody cover over our study period although some weird stuff is happening in 2011 - the year of the fire. Why? Quite a lot of things could be causing problems. Were this earlier in the season with higher precipitation some of those large oaks could have leafed back out and new leaves might have fooled the sensors into reporting greener values than were the case. Trees often die over an extended period of time when stressed by fire - some of the those trees were dead, they just didn't know it yet. Fire intensity is likely a factor in how stressed a tree gets, so may influence how fast they die. If those factors don't confuse issues enough, we should consider how the data gets collected. RAP data incorporates multiple imagery passes as well as physical "on the ground" vegetation sampling. These occur over time and can't really be sorted out from a single image. Some may have occurred prior to the fire and others afterward. So how do we deal with the 2011 data? You're research question is likely to be something to the effect of "What is the response of "X" to the fire?", so you really just need to know what the conditions were prior to the fire versus after - you may not need to fool with the 2011 data.
 
 ```{r}
 #| label: line graph
@@ -393,4 +405,11 @@ plot_name<-
 print(plot_name)  
 
 ```
+
+
+```{r cite}
+pkgs <- cite_packages(output = "table", out.dir = ".")
+knitr::kable(pkgs)
+```
+
 

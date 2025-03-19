@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Mike Proctor">
+<meta name="dcterms.date" content="2025-03-19">
 
-<title>RAP_Download</title>
+<title>Download and extract Rangeland Analysis Platform data for specific sites</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -55,7 +56,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="README_files/libs/clipboard/clipboard.min.js"></script>
@@ -68,19 +89,58 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="README_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="README_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="README_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="README_files/libs/core-js-2.5.3/shim.min.js"></script>
+
+<script src="README_files/libs/react-18.2.0/react.min.js"></script>
+
+<script src="README_files/libs/react-18.2.0/react-dom.min.js"></script>
+
+<script src="README_files/libs/reactwidget-2.0.0/react-tools.js"></script>
+
+<link href="README_files/libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+
+<script src="README_files/libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+
+<link href="README_files/libs/reactable-0.4.4/reactable.css" rel="stylesheet">
+
+<script src="README_files/libs/reactable-binding-0.4.4/reactable.js"></script>
+
 
 
 </head>
 
-<body class="fullcontent">
+<body>
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#load-libraries-and-set-up-folder-paths" id="toc-load-libraries-and-set-up-folder-paths" class="nav-link active" data-scroll-target="#load-libraries-and-set-up-folder-paths">Load libraries and set up folder paths</a></li>
+  <li><a href="#install-and-load-the-rapr-package" id="toc-install-and-load-the-rapr-package" class="nav-link" data-scroll-target="#install-and-load-the-rapr-package">Install and load the rapr package</a></li>
+  <li><a href="#download-fire-perimeter-dataset-from-nifc" id="toc-download-fire-perimeter-dataset-from-nifc" class="nav-link" data-scroll-target="#download-fire-perimeter-dataset-from-nifc">Download Fire Perimeter dataset from NIFC</a></li>
+  <li><a href="#load-the-fire-perimeter-data" id="toc-load-the-fire-perimeter-data" class="nav-link" data-scroll-target="#load-the-fire-perimeter-data">Load the fire perimeter data</a></li>
+  <li><a href="#filter-data-set-for-the-ferguson-fire-wmnwr-in-2011" id="toc-filter-data-set-for-the-ferguson-fire-wmnwr-in-2011" class="nav-link" data-scroll-target="#filter-data-set-for-the-ferguson-fire-wmnwr-in-2011">Filter data set for the Ferguson fire @ WMNWR in 2011</a></li>
+  <li><a href="#download-rap-data" id="toc-download-rap-data" class="nav-link" data-scroll-target="#download-rap-data">Download RAP data</a></li>
+  <li><a href="#plot-the-rap-data-just-to-check" id="toc-plot-the-rap-data-just-to-check" class="nav-link" data-scroll-target="#plot-the-rap-data-just-to-check">Plot the RAP data just to check</a></li>
+  <li><a href="#buffer-the-perimeter" id="toc-buffer-the-perimeter" class="nav-link" data-scroll-target="#buffer-the-perimeter">Buffer the perimeter</a></li>
+  <li><a href="#mask-rap-layers-to-buffer" id="toc-mask-rap-layers-to-buffer" class="nav-link" data-scroll-target="#mask-rap-layers-to-buffer">Mask RAP layers to buffer</a></li>
+  <li><a href="#plot-the-masked-layers" id="toc-plot-the-masked-layers" class="nav-link" data-scroll-target="#plot-the-masked-layers">Plot the masked layers</a></li>
+  <li><a href="#create-histograms" id="toc-create-histograms" class="nav-link" data-scroll-target="#create-histograms">Create Histograms</a></li>
+  <li><a href="#calculate-and-plot-focal-means-for-each-layer" id="toc-calculate-and-plot-focal-means-for-each-layer" class="nav-link" data-scroll-target="#calculate-and-plot-focal-means-for-each-layer">Calculate and plot focal means for each layer</a></li>
+  <li><a href="#create-some-random-sites-and-pretend-they-are-acoustic-or-camera-trap-sites." id="toc-create-some-random-sites-and-pretend-they-are-acoustic-or-camera-trap-sites." class="nav-link" data-scroll-target="#create-some-random-sites-and-pretend-they-are-acoustic-or-camera-trap-sites.">Create some random sites and pretend they are acoustic or camera trap sites.</a></li>
+  <li><a href="#extract-rap-based-on-sites" id="toc-extract-rap-based-on-sites" class="nav-link" data-scroll-target="#extract-rap-based-on-sites">Extract RAP based on sites</a></li>
+  <li><a href="#well-need-to-rearrange-the-data-frame-a-bit-for-the-plot." id="toc-well-need-to-rearrange-the-data-frame-a-bit-for-the-plot." class="nav-link" data-scroll-target="#well-need-to-rearrange-the-data-frame-a-bit-for-the-plot.">We’ll need to rearrange the data frame a bit for the plot.</a></li>
+  <li><a href="#plot-a-line-graph-of-the-data-for-all-sites-and-years" id="toc-plot-a-line-graph-of-the-data-for-all-sites-and-years" class="nav-link" data-scroll-target="#plot-a-line-graph-of-the-data-for-all-sites-and-years">Plot a line graph of the data for all sites and years</a></li>
+  </ul>
+</nav>
+</div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">RAP_Download</h1>
+<h1 class="title">Download and extract Rangeland Analysis Platform data for specific sites</h1>
 </div>
 
 
@@ -94,6 +154,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           </div>
   </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 19, 2025</p>
+    </div>
+  </div>
   
     
   </div>
@@ -103,8 +169,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p><a href="https://rangelands.app/">Rangeland Analysis Platform</a></p>
 <section id="load-libraries-and-set-up-folder-paths" class="level2">
 <h2 class="anchored" data-anchor-id="load-libraries-and-set-up-folder-paths">Load libraries and set up folder paths</h2>
+<p>Code uses rprojroot library which needs to be run within a project in RStudio.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressWarnings</span>({  <span class="co"># Just so we don't get a bunch of unnecessary messages on render</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(tidyverse)) </span>
@@ -112,14 +180,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(sf))</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(terra))</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(tidyterra))</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="do">## Local stuff  =================</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>base_path       <span class="ot">&lt;-</span> <span class="fu">find_rstudio_root_file</span>()                     </span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>source_path     <span class="ot">&lt;-</span> <span class="fu">file.path</span>(base_path, <span class="st">"source_data//"</span>)          </span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>dat_path        <span class="ot">&lt;-</span> <span class="fu">file.path</span>(base_path, <span class="st">"dat_output//"</span>)            </span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>plot_path       <span class="ot">&lt;-</span> <span class="fu">file.path</span>(base_path, <span class="st">"plots//"</span>)                 </span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>csv_path        <span class="ot">&lt;-</span> <span class="fu">file.path</span>(base_path, <span class="st">"csv_output//"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(reactable))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(reactablefmtr))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(grateful))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="do">## Local stuff  =================</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>base_path       <span class="ot">&lt;-</span> <span class="fu">find_rstudio_root_file</span>()                     </span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>source_path     <span class="ot">&lt;-</span> <span class="fu">file.path</span>(base_path, <span class="st">"source_data//"</span>)          </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="install-and-load-the-rapr-package" class="level2">
@@ -128,48 +196,116 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#remotes::install_github("brownag/rapr")</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rapr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Make sure there is a “source_data” folder within this project - whereever you saved it locally. The following line will create one in the correct location.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">dir.exists</span>(<span class="st">"source_data"</span>), <span class="fu">dir.create</span>(<span class="st">"source_data"</span>), <span class="st">"Folder exists already"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "Folder exists already"</code></pre>
-</div>
-</div>
+<p>Make sure there is a “source_data” folder within this project - where ever you saved it locally. The following line will create one in the correct location.</p>
 </section>
 <section id="download-fire-perimeter-dataset-from-nifc" class="level2">
 <h2 class="anchored" data-anchor-id="download-fire-perimeter-dataset-from-nifc">Download Fire Perimeter <a href="https://data-nifc.opendata.arcgis.com/datasets/5b3ff19978be49208d41a9d9a461ecfb/about">dataset</a> from NIFC</h2>
 <p>Save this in the “source_data” folder created above.</p>
 </section>
-<section id="load-and-filter-dataset-to-get-ferguson-fire-wmnwr-in-2011" class="level2">
-<h2 class="anchored" data-anchor-id="load-and-filter-dataset-to-get-ferguson-fire-wmnwr-in-2011">Load and filter dataset to get Ferguson fire @ WMNWR in 2011</h2>
+<section id="load-the-fire-perimeter-data" class="level2">
+<h2 class="anchored" data-anchor-id="load-the-fire-perimeter-data">Load the fire perimeter data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># There's only one layer so we don't have to specify layer name for st_read</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># st_layers(paste0(source_path, </span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#                  "Historic_Geomac_Perimeters_Combined_2000_2018_-7007592357689317076.gpkg"))</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>Fires <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="fu">paste0</span>(source_path,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Historic_Geomac_Perimeters_Combined_2000_2018_-7007592357689317076.gpkg"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `US_HIST_FIRE_PERIMTRS_2000_2018_DD83' from data source 
+  `G:\___R___\RAP\source_data\Historic_Geomac_Perimeters_Combined_2000_2018_-7007592357689317076.gpkg' 
+  using driver `GPKG'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in CPL_read_ogr(dsn, layer, query, as.character(options), quiet, : GDAL
+Message 1: Non-conformant content for record 1 in column datecurrent,
+2018-02-14T00:00:00.0Z, successfully parsed</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 23776 features and 20 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: -19908540 ymin: 377194.8 xmax: -7272854 ymax: 11120720
+Projected CRS: WGS 84 / Pseudo-Mercator</code></pre>
+</div>
+</div>
 </section>
-<section id="download-rap-data" class="level1">
-<h1>Download RAP data</h1>
+<section id="filter-data-set-for-the-ferguson-fire-wmnwr-in-2011" class="level2">
+<h2 class="anchored" data-anchor-id="filter-data-set-for-the-ferguson-fire-wmnwr-in-2011">Filter data set for the Ferguson fire @ WMNWR in 2011</h2>
+<p><a href="https://www.news9.com/story/5e35b03683eff40362bec4d4/firefighters-have-comanche-county-wildfires-under-control">Firefighters Have Comanche County Wildfires Under Control</a></p>
+<p><a href="https://www.oklahoman.com/story/business/local/2016/07/30/two-construction-companies-fined-for-wichita-mountains-fire/60660143007/">Two construction companies fined for Wichita Mountains fire</a></p>
+<p><a href="https://www.researchgate.net/publication/281408533_Performance_of_Burn-Severity_Metrics_and_Classification_in_Oak_Woodlands_and_Grasslands">Performance of Burn-Severity Metrics and Classification in Oak Woodlands and Grasslands</a></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>Ferguson <span class="ot">&lt;-</span> Fires <span class="sc">|&gt;</span> <span class="fu">filter</span>(incidentname <span class="sc">==</span> <span class="st">"Ferguson"</span> <span class="sc">&amp;</span> state <span class="sc">==</span> <span class="st">"OK"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>Ferguson <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">st_transform</span>(Ferguson, <span class="at">crs =</span> <span class="dv">4326</span>) <span class="co"># Set crs so it lines up with RAP</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#st_crs(Ferguson)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="download-rap-data" class="level2">
+<h2 class="anchored" data-anchor-id="download-rap-data">Download RAP data</h2>
 <p>The get_rap() function calculates the extent of the polygon (Ferguson) and uses that as an AOI.</p>
 <p>Plot the rap layers along with the Ferguson perimeter to make sure they land right - no crs issues. Downloads all of the cover layers but filters to only the tree cover layers</p>
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>
-  |                                                                            
-  |                                                                      |   0%
-  |                                                                            
-  |=======================                                               |  33%
-  |                                                                            
-  |===============================================                       |  67%
-  |                                                                            
-  |======================================================================| 100%</code></pre>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Turn this off after running the first time so you don't spam the server</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">get_rap</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  Ferguson, <span class="co"># creates a bounding box of this polygon - you can specify a bounding box directly - see docs</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">version =</span> <span class="st">"v3"</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">years =</span> <span class="fu">c</span>(<span class="dv">2010</span><span class="sc">:</span><span class="dv">2012</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#  filename = "RAP.tif",</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">product =</span> <span class="st">"vegetation-cover"</span>, <span class="co"># other option here is "vegetation-biomass"</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">progress =</span> <span class="cn">FALSE</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="co">#st_crs(res) # check crs </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+</section>
+<section id="plot-the-rap-data-just-to-check" class="level2">
+<h2 class="anchored" data-anchor-id="plot-the-rap-data-just-to-check">Plot the RAP data just to check</h2>
+<p>You can already see some differences between the years.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Layers &lt;- names(res)# This gets the name of the indexed layer https://rspatial.github.io/terra/reference/as.list.html</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>Layers <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">names</span>(res)) <span class="sc">|&gt;</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">filter</span>(<span class="fu">str_detect</span>(<span class="fu">names</span>(res), <span class="st">"^tree"</span>)) <span class="co"># only interested in the tree layers</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> Layers) {</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">#This loops through all of the layers </span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  spatter <span class="ot">&lt;-</span> res <span class="sc">|&gt;</span> tidyterra<span class="sc">::</span><span class="fu">select</span>(<span class="fu">all_of</span>(i))<span class="co"># https://dieghernan.github.io/tidyterra/index.html</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Parse out parts of layer names </span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  category <span class="ot">&lt;-</span> <span class="fu">str_extract</span>(i, <span class="st">"[a-z]+"</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  stat <span class="ot">&lt;-</span> <span class="fu">str_extract</span>(i, <span class="st">"[a-z]+_[0-9]+_[a-z][0-9]+$"</span>) <span class="sc">|&gt;</span> <span class="fu">str_extract</span>(<span class="st">"[a-z]+"</span>)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  layerdate <span class="ot">&lt;-</span> <span class="fu">str_extract</span>(i, <span class="st">"[0-9]+"</span>) <span class="sc">|&gt;</span> <span class="fu">str_remove</span>(<span class="st">"_"</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    plot_name <span class="ot">&lt;-</span> </span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  tidyterra<span class="sc">::</span><span class="fu">geom_spatraster</span>(<span class="at">data =</span> spatter) <span class="sc">+</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_sf</span>(<span class="at">data =</span> Ferguson, <span class="at">color =</span> <span class="st">"green"</span>, <span class="at">fill =</span> <span class="st">"transparent"</span>) <span class="sc">+</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.title.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.x  =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.ticks.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.y  =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.ticks.y =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"2011 Ferguson Fire Perimeter"</span>) <span class="sc">+</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">facet_wrap</span>(<span class="sc">~</span>lyr)</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot_name)</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="README_files/figure-html/GetRap-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="README_files/figure-html/PlotRap-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="buffer-the-perimeter" class="level1">
-<h1>Buffer the perimeter</h1>
+<section id="buffer-the-perimeter" class="level2">
+<h2 class="anchored" data-anchor-id="buffer-the-perimeter">Buffer the perimeter</h2>
 <p>Used -100m to avoid edge effects from roads, firebreaks etc. If I were working with movement data(GPS collars) of animals, I’d probably use a positive number and consider movement range or territory size to sort out what value to use. If the buffer is larger than the original polygon, use it in the first argument in get_rap() instead of the original. In reality -100m is probably too much but it makes it easier to see the buffer when plotting at this scale. The red line is the original Ferguson perimeter, the tan is the buffered perimeter, and the green is the difference between the two - what we buffered out.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -180,75 +316,428 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>Mask RAP layers to buffer</p>
+</section>
+<section id="mask-rap-layers-to-buffer" class="level2">
+<h2 class="anchored" data-anchor-id="mask-rap-layers-to-buffer">Mask RAP layers to buffer</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>reProSpatter <span class="ot">&lt;-</span> <span class="fu">project</span>(spatter, <span class="st">"EPSG:32614"</span>) <span class="co"># Has to match the polygon were using for the mask</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># st_crs(rapRaster)</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># st_crs(Ferguson)</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#names(reProSpatter)</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (k <span class="cf">in</span> <span class="fu">names</span>(reProSpatter)) {</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>rapRaster <span class="ot">&lt;-</span> reProSpatter[[k]]</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>maskedRap <span class="ot">&lt;-</span> <span class="fu">mask</span>(rapRaster[[k]]</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>     , Ferguson_buffered_100</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>     , <span class="at">inverse=</span><span class="cn">FALSE</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>     , <span class="at">updatevalue=</span><span class="cn">NA</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>     , <span class="at">touches=</span><span class="cn">TRUE</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># , filename=paste0(plot_path, k, ".tif")</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>     )</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> maskedRap</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>df_name <span class="ot">&lt;-</span> <span class="fu">paste</span>(k)</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#assign(df_name, df, envir = .GlobalEnv) # pull out individual layers to environment</span></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">#plot(df, main = df_name)</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>plot_name<span class="ot">&lt;-</span> </span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_spatraster</span>(<span class="at">data =</span> df) <span class="sc">+</span></span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_c</span>( <span class="at">na.value =</span> <span class="st">"transparent"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>  <span class="co">#geom_sf(data = Ferguson_buffered_100, color = "red", alpha = 100) +</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  <span class="co">#theme(legend.position = "none") +</span></span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">""</span>,</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">paste0</span>(<span class="st">"Ferguson Fire 2011"</span>),</span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> k</span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot_name)  </span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>reProSpatter <span class="ot">&lt;-</span> <span class="fu">project</span>(spatter, <span class="st">"EPSG:32614"</span>) <span class="co"># Has to match the polygon we're using for the mask</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># st_crs(rapRaster)</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># st_crs(Ferguson)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#names(reProSpatter)</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>layerList <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (k <span class="cf">in</span> <span class="fu">names</span>(reProSpatter)) {</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>maskedRap <span class="ot">&lt;-</span> <span class="fu">mask</span>(reProSpatter[[k]]</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>     , Ferguson_buffered_100</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>     , <span class="at">inverse =</span> <span class="cn">FALSE</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>     , <span class="at">updatevalue =</span> <span class="cn">NA</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>     , <span class="at">touches =</span> <span class="cn">TRUE</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># , filename=paste0(plot_path, k, ".tif")</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> maskedRap</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>df_name <span class="ot">&lt;-</span> <span class="fu">paste</span>(k)</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="fu">assign</span>(df_name, df, <span class="at">envir =</span> .GlobalEnv) <span class="co"># Save individual layers to environment</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>layerList[[k]] <span class="ot">&lt;-</span> df_name <span class="co"># Create a list of the layer names while we're at it</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="plot-the-masked-layers" class="level2">
+<h2 class="anchored" data-anchor-id="plot-the-masked-layers">Plot the masked layers</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (z <span class="cf">in</span> layerList) {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>plot_name <span class="ot">&lt;-</span> </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_spatraster</span>(<span class="at">data =</span> <span class="fu">get</span>(z)) <span class="sc">+</span> <span class="co"># layers are coming from the environment now</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_c</span>( <span class="at">na.value =</span> <span class="st">"transparent"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="co">#legend.position = "none",</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.title.x    =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.x     =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.ticks.x    =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.y     =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.ticks.y    =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">""</span>,</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">paste0</span>(<span class="st">"Ferguson Fire 2011"</span>),</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> z</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot_name)  </span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="README_files/figure-html/mask-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="README_files/figure-html/Plot%20mask-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="README_files/figure-html/mask-2.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="README_files/figure-html/Plot%20mask-2.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="README_files/figure-html/mask-3.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="README_files/figure-html/Plot%20mask-3.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Histograms</p>
-<p>Focal means</p>
-<p>Create some random sites</p>
-<p>Extract RAP based on sites</p>
+</section>
+<section id="create-histograms" class="level2">
+<h2 class="anchored" data-anchor-id="create-histograms">Create Histograms</h2>
+<p>We can definitely see some changes between years now.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (y <span class="cf">in</span> layerList) {</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(<span class="fu">get</span>(y)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>     ,<span class="at">plot =</span> <span class="cn">TRUE</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>     , <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">100</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>     , <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">130000</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>     , <span class="at">xlab =</span> <span class="st">"Percent Cover"</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="README_files/figure-html/histogram-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="README_files/figure-html/histogram-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="README_files/figure-html/histogram-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="calculate-and-plot-focal-means-for-each-layer" class="level2">
+<h2 class="anchored" data-anchor-id="calculate-and-plot-focal-means-for-each-layer">Calculate and plot focal means for each layer</h2>
+<p>Calculating the mean across a 15X15 matrix and storing that value in the middle pixel of that matrix. The resolution of the imagery comes into play here - RAP has 30m resolution so a 15X15 matrix represents a 450mX450 area on the ground. Size and mobility/territoriality of a target organism might influence the choice of matrix size as well. I chose 15X15 just for dramatic effect - makes it easier to see the change.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>focalities <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (n <span class="cf">in</span> layerList) {</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  focalities[[n]] <span class="ot">&lt;-</span> </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">focal</span>(</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">get</span>(n),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">w =</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="dv">15</span>, <span class="at">ncol =</span> <span class="dv">15</span>),</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>      <span class="co">#w = matrix(1, nrow = 3, ncol = 3),</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">fun =</span> mean,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">na.rm =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  plot_name <span class="ot">&lt;-</span> <span class="co"># We're plotting as we calculate the focal mean for each layer</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">#geom_spatraster(data = get(n)) +</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_spatraster</span>(<span class="at">data =</span> focalities[[n]]) <span class="sc">+</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_c</span>( <span class="at">na.value =</span> <span class="st">"transparent"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="co">#legend.position = "none",</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.title.x    =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.x     =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.ticks.x    =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.y     =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.ticks.y    =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">""</span>,</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> n,</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Focal Mean"</span></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot_name)  </span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="README_files/figure-html/focal%20mean-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="README_files/figure-html/focal%20mean-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="README_files/figure-html/focal%20mean-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="create-some-random-sites-and-pretend-they-are-acoustic-or-camera-trap-sites." class="level2">
+<h2 class="anchored" data-anchor-id="create-some-random-sites-and-pretend-they-are-acoustic-or-camera-trap-sites.">Create some random sites and pretend they are acoustic or camera trap sites.</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">67</span>) <span class="co"># What happens if this isn't set or set to something different?</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>RandomSampleSites <span class="ot">&lt;-</span> <span class="fu">st_sample</span>(Ferguson_buffered_100, <span class="at">size =</span> <span class="dv">30</span>, <span class="at">type =</span> <span class="st">"random"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Converts to an sf object and adds SiteID column</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>RandomSampleSites <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(RandomSampleSites) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="st">"SiteID"</span> <span class="ot">=</span> <span class="fu">row_number</span>())</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  plot_name <span class="ot">&lt;-</span> </span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_spatvector</span>(<span class="at">data =</span> Ferguson_buffered_100) <span class="sc">+</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_spatvector_label</span>(<span class="at">data =</span> RandomSampleSites, <span class="fu">aes</span>(<span class="at">label =</span> SiteID)) <span class="sc">+</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="co">#legend.position = "none",</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.title.x    =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.x     =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.ticks.x    =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.title.y    =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.y     =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.ticks.y    =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">""</span>,</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Our Awesome Random Sample Sites"</span>,</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">#subtitle = "Focal Mean"</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot_name) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="README_files/figure-html/random-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="extract-rap-based-on-sites" class="level2">
+<h2 class="anchored" data-anchor-id="extract-rap-based-on-sites">Extract RAP based on sites</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>Focal_df <span class="ot">&lt;-</span> <span class="fu">list</span>() <span class="co"># create an empty list</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (p <span class="cf">in</span> layerList) {</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>Focal_df[[p]] <span class="ot">&lt;-</span> <span class="co"># add a data frame to list on each loop</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>( </span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract</span>(              <span class="co"># we end up with a list of data frames</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get</span>(p), </span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    RandomSampleSites)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  ,<span class="dv">2</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>Focal_df <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(Focal_df) <span class="sc">|&gt;</span> <span class="co"># converts from a list to a single data frame</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>            <span class="fu">rename</span>(<span class="st">"SiteID"</span> <span class="ot">=</span> <span class="st">"ID"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="well-need-to-rearrange-the-data-frame-a-bit-for-the-plot." class="level2">
+<h2 class="anchored" data-anchor-id="well-need-to-rearrange-the-data-frame-a-bit-for-the-plot.">We’ll need to rearrange the data frame a bit for the plot.</h2>
+<p>First we’ll pivot the year and focal mean value into two columns then we’ll clean up the data in the year column so that it only has the year.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>Focal_pivot <span class="ot">&lt;-</span> Focal_df <span class="sc">|&gt;</span> <span class="fu">pivot_longer</span>(<span class="fu">c</span>(<span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>), <span class="at">names_to =</span> <span class="st">"Year"</span>, <span class="at">values_to =</span> <span class="st">"Value"</span>, <span class="at">values_drop_na =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Focal_separate &lt;- Focal_pivot |&gt; </span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   separate_wider_delim(Year, # Just to show what is going on - we're really just after "Year"</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">#                        names = c("tree", "cover", "Year", "version"),</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co">#                        delim = "_")</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>Focal_separate <span class="ot">&lt;-</span> Focal_pivot <span class="sc">|&gt;</span> </span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_wider_delim</span>(Year, <span class="co"># Remove the extra columns in one go</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>                       <span class="at">names =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="cn">NA</span>, <span class="st">"Year"</span>, <span class="cn">NA</span>), </span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">delim =</span> <span class="st">"_"</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>                       <span class="co">#,too_many = "debug"</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>                       )</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="fu">reactable</span>(Focal_separate) <span class="sc">|&gt;</span> <span class="fu">add_title</span>(<span class="at">title =</span> <span class="st">"Focal Mean Values"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_subtitle</span>((<span class="at">subtitle =</span> <span class="st">"Acoustic and Camera Trap Sites"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<h1 style="color:#000;background:#FFFFFF;text-align:left;font-size:32px;font-style:normal;font-weight:bold;text-decoration:;letter-spacing:px;word-spacing:px;text-transform:;text-shadow:;margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px">Focal Mean Values</h1>
+<h2 style="color:#000;background:#FFFFFF;text-align:left;font-size:24px;font-style:normal;font-weight:bold;text-decoration:;letter-spacing:px;word-spacing:px;text-transform:;text-shadow:;margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px" class="anchored">Acoustic and Camera Trap Sites</h2>
+<div class="reactable html-widget html-fill-item" id="htmlwidget-0fc2d775c60f89064029" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-0fc2d775c60f89064029">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"SiteID":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],"Year":["2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2010","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2011","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012","2012"],"Value":[22.59,2.16,68.14,8.89,3.82,2,14.38,18.73,28.24,15.7,46.64,20.25,14.81,63.44,57.26,10.7,55.15,6.8,1.41,29.24,45.44,75.15,37.92,21.41,1.71,10.44,85.83,34.36,60.88,47.44,17.9,2.35,42.18,7.91,5.69,3.75,6.92,3.77,13.74,8.28,33.38,9.87,6.9,68.06,51.08,3.93,41.94,6.14,7.41,10.36,19.94,51.51,31.64,6.46,4.74,7.76,52.27,36.6,39.24,18.53,19.7,0.9,10.61,2.84,10.85,1.75,11.44,4,7.49,3.43,21.44,2.21,2,50.1,19.58,2.52,8.74,1.98,2.41,3.84,7.88,12.6,26.24,3.73,2.37,1.91,15.88,13.46,13.93,7.52]},"columns":[{"id":"SiteID","name":"SiteID","type":"numeric"},{"id":"Year","name":"Year","type":"character"},{"id":"Value","name":"Value","type":"numeric"}],"dataKey":"9a812effe9c5f551dd5b91e6f5188944"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+<section id="plot-a-line-graph-of-the-data-for-all-sites-and-years" class="level2">
+<h2 class="anchored" data-anchor-id="plot-a-line-graph-of-the-data-for-all-sites-and-years">Plot a line graph of the data for all sites and years</h2>
+<p>There’s an obvious decline in woody cover over our study period although some weird stuff is happening in 2011 - the year of the fire. Why? Quite a lot of things could be causing problems. Were this earlier in the season with higher precipitation some of those large oaks could have leafed back out and new leaves might have fooled the sensors into reporting greener values than were the case. Trees often die over an extended period of time when stressed by fire - some of the those trees were dead, they just didn’t know it yet. Fire intensity is likely a factor in how stressed a tree gets, so may influence how fast they die. If those factors don’t confuse issues enough, we should consider how the data gets collected. RAP data incorporates multiple imagery passes as well as physical “on the ground” vegetation sampling. These occur over time and can’t really be sorted out from a single image. Some may have occurred prior to the fire and others afterward. So how do we deal with the 2011 data? You’re research question is likely to be something to the effect of “What is the response of”X” to the fire?“, so you really just need to know what the conditions were prior to the fire versus after - you may not need to fool with the 2011 data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>Focal_separate<span class="sc">$</span>SiteID <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">as.character</span>(Focal_separate<span class="sc">$</span>SiteID)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                        ) <span class="co"># changes ID to character to use for labels</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co">#levels(Focal_separate$SiteID)</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>Focal_separate<span class="sc">$</span>SiteID <span class="ot">&lt;-</span> <span class="fu">factor</span>(Focal_separate<span class="sc">$</span>SiteID, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)) <span class="co"># ordering ID for plot</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>plot_name<span class="ot">&lt;-</span> </span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(Focal_separate) <span class="sc">+</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">#geom_point() +</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(Year, Value, <span class="at">group =</span> SiteID, <span class="at">col =</span> SiteID)) <span class="sc">+</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>() <span class="sc">+</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Percent Cover"</span>) <span class="sc">+</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">#theme(legend.position = "none") +</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">""</span>,</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Percent Tree Cover by Year Based on RAP data"</span>,</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"2011 Ferguson Fire"</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot_name)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="README_files/figure-html/line%20graph-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>pkgs <span class="ot">&lt;-</span> <span class="fu">cite_packages</span>(<span class="at">output =</span> <span class="st">"table"</span>, <span class="at">out.dir =</span> <span class="st">"."</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(pkgs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 11%">
+<col style="width: 68%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Package</th>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Citation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">base</td>
+<td style="text-align: left;">4.4.2</td>
+<td style="text-align: left;"><span class="citation" data-cites="base">R Core Team (<a href="#ref-base" role="doc-biblioref">2024</a>)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">knitr</td>
+<td style="text-align: left;">1.49</td>
+<td style="text-align: left;"><span class="citation" data-cites="knitr2014">Xie (<a href="#ref-knitr2014" role="doc-biblioref">2014</a>)</span>; <span class="citation" data-cites="knitr2015">Xie (<a href="#ref-knitr2015" role="doc-biblioref">2015</a>)</span>; <span class="citation" data-cites="knitr2024">Xie (<a href="#ref-knitr2024" role="doc-biblioref">2024</a>)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">rapr</td>
+<td style="text-align: left;">0.1.2</td>
+<td style="text-align: left;"><span class="citation" data-cites="rapr2019c">Robinson et al. (<a href="#ref-rapr2019c" role="doc-biblioref">2019</a>)</span>; <span class="citation" data-cites="rapr2021b">Jones et al. (<a href="#ref-rapr2021b" role="doc-biblioref">2021</a>)</span>; <span class="citation" data-cites="rapr2021d">Allred et al. (<a href="#ref-rapr2021d" role="doc-biblioref">2021</a>)</span>; <span class="citation" data-cites="rapra">Brown (<a href="#ref-rapra" role="doc-biblioref">n.d.</a>)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">reactable</td>
+<td style="text-align: left;">0.4.4</td>
+<td style="text-align: left;"><span class="citation" data-cites="reactable">Lin (<a href="#ref-reactable" role="doc-biblioref">2023</a>)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">reactablefmtr</td>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;"><span class="citation" data-cites="reactablefmtr">Cuilla (<a href="#ref-reactablefmtr" role="doc-biblioref">2022</a>)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">rmarkdown</td>
+<td style="text-align: left;">2.29</td>
+<td style="text-align: left;"><span class="citation" data-cites="rmarkdown2018">Xie, Allaire, and Grolemund (<a href="#ref-rmarkdown2018" role="doc-biblioref">2018</a>)</span>; <span class="citation" data-cites="rmarkdown2020">Xie, Dervieux, and Riederer (<a href="#ref-rmarkdown2020" role="doc-biblioref">2020</a>)</span>; <span class="citation" data-cites="rmarkdown2024">Allaire et al. (<a href="#ref-rmarkdown2024" role="doc-biblioref">2024</a>)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">rprojroot</td>
+<td style="text-align: left;">2.0.4</td>
+<td style="text-align: left;"><span class="citation" data-cites="rprojroot">Müller (<a href="#ref-rprojroot" role="doc-biblioref">2023</a>)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">sf</td>
+<td style="text-align: left;">1.0.19</td>
+<td style="text-align: left;"><span class="citation" data-cites="sf2018">Pebesma (<a href="#ref-sf2018" role="doc-biblioref">2018</a>)</span>; <span class="citation" data-cites="sf2023">Pebesma and Bivand (<a href="#ref-sf2023" role="doc-biblioref">2023</a>)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">terra</td>
+<td style="text-align: left;">1.8.29</td>
+<td style="text-align: left;"><span class="citation" data-cites="terra">Hijmans (<a href="#ref-terra" role="doc-biblioref">2025</a>)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">tidyterra</td>
+<td style="text-align: left;">0.7.0</td>
+<td style="text-align: left;"><span class="citation" data-cites="R-tidyterra">Hernangómez (<a href="#ref-R-tidyterra" role="doc-biblioref">2023</a>)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">tidyverse</td>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;"><span class="citation" data-cites="tidyverse">Wickham et al. (<a href="#ref-tidyverse" role="doc-biblioref">2019</a>)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
 </section>
 
-</main>
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-rmarkdown2024" class="csl-entry" role="listitem">
+Allaire, JJ, Yihui Xie, Christophe Dervieux, Jonathan McPherson, Javier Luraschi, Kevin Ushey, Aron Atkins, et al. 2024. <em><span class="nocase">rmarkdown</span>: Dynamic Documents for r</em>. <a href="https://github.com/rstudio/rmarkdown">https://github.com/rstudio/rmarkdown</a>.
+</div>
+<div id="ref-rapr2021d" class="csl-entry" role="listitem">
+Allred, B. W., B. T. Bestelmeyer, C. S. Boyd, C. Brown, K. W. Davies, L. M. Ellsworth, et al. 2021. <span>“Improving Landsat Predictions of Rangeland Fractional Cover with Multitask Learning and Uncertainty. Methods in Ecology and Evolution.”</span> <em>Methods in Ecology and Evolution.</em> <a href="http://dx.doi.org/10.1111/2041-210x.13564">http://dx.doi.org/10.1111/2041-210x.13564</a>.
+</div>
+<div id="ref-rapra" class="csl-entry" role="listitem">
+Brown, Andrew. n.d. <em><span class="nocase">rapr</span>: Interface to Rangeland Analysis Platform (RAP) Vegetation Biomass and Cover Products</em>. <a href="http://github.com/brownag/rapr">http://github.com/brownag/rapr</a>.
+</div>
+<div id="ref-reactablefmtr" class="csl-entry" role="listitem">
+Cuilla, Kyle. 2022. <em><span class="nocase">reactablefmtr</span>: Streamlined Table Styling and Formatting for Reactable</em>. <a href="https://CRAN.R-project.org/package=reactablefmtr">https://CRAN.R-project.org/package=reactablefmtr</a>.
+</div>
+<div id="ref-R-tidyterra" class="csl-entry" role="listitem">
+Hernangómez, Diego. 2023. <span>“Using the <span class="nocase">tidyverse</span> with <span class="nocase">terra</span> Objects: The <span class="nocase">tidyterra</span> Package.”</span> <em>Journal of Open Source Software</em> 8 (91): 5751. <a href="https://doi.org/10.21105/joss.05751">https://doi.org/10.21105/joss.05751</a>.
+</div>
+<div id="ref-terra" class="csl-entry" role="listitem">
+Hijmans, Robert J. 2025. <em><span class="nocase">terra</span>: Spatial Data Analysis</em>. <a href="https://CRAN.R-project.org/package=terra">https://CRAN.R-project.org/package=terra</a>.
+</div>
+<div id="ref-rapr2021b" class="csl-entry" role="listitem">
+Jones, M.O., N. P. Robinson, D. E. Naugle, J. D. Maestas, M. C. Reeves, R. W. Lankston, and B. W. Allred. 2021. <span>“Annual and 16-Day Rangeland Production Estimates for the Western United States.”</span> <em>Rangeland Ecology &amp; Management</em> 77: 112–17. <a href="http://dx.doi.org/10.1016/j.rama.2021.04.003">http://dx.doi.org/10.1016/j.rama.2021.04.003</a>.
+</div>
+<div id="ref-reactable" class="csl-entry" role="listitem">
+Lin, Greg. 2023. <em><span class="nocase">reactable</span>: Interactive Data Tables for r</em>. <a href="https://CRAN.R-project.org/package=reactable">https://CRAN.R-project.org/package=reactable</a>.
+</div>
+<div id="ref-rprojroot" class="csl-entry" role="listitem">
+Müller, Kirill. 2023. <em><span class="nocase">rprojroot</span>: Finding Files in Project Subdirectories</em>. <a href="https://CRAN.R-project.org/package=rprojroot">https://CRAN.R-project.org/package=rprojroot</a>.
+</div>
+<div id="ref-sf2018" class="csl-entry" role="listitem">
+Pebesma, Edzer. 2018. <span>“<span class="nocase">Simple Features for R: Standardized Support for Spatial Vector Data</span>.”</span> <em><span>The R Journal</span></em> 10 (1): 439–46. <a href="https://doi.org/10.32614/RJ-2018-009">https://doi.org/10.32614/RJ-2018-009</a>.
+</div>
+<div id="ref-sf2023" class="csl-entry" role="listitem">
+Pebesma, Edzer, and Roger Bivand. 2023. <em><span class="nocase">Spatial Data Science: With applications in R</span></em>. <span>Chapman and Hall/CRC</span>. <a href="https://doi.org/10.1201/9780429459016">https://doi.org/10.1201/9780429459016</a>.
+</div>
+<div id="ref-base" class="csl-entry" role="listitem">
+R Core Team. 2024. <em><span>R</span>: A Language and Environment for Statistical Computing</em>. Vienna, Austria: R Foundation for Statistical Computing. <a href="https://www.R-project.org/">https://www.R-project.org/</a>.
+</div>
+<div id="ref-rapr2019c" class="csl-entry" role="listitem">
+Robinson, N. P., M. O. Jones, A. Moreno, T. A. Erickson, D. E. Naugle, and B. W. Allred. 2019. <span>“Rangeland Productivity Partitioned to Sub-Pixel Plant Functional Types.”</span> <em>Remote Sensing</em> 11 (1427). <a href="http://dx.doi.org/10.3390/rs11121427">http://dx.doi.org/10.3390/rs11121427</a>.
+</div>
+<div id="ref-tidyverse" class="csl-entry" role="listitem">
+Wickham, Hadley, Mara Averick, Jennifer Bryan, Winston Chang, Lucy D’Agostino McGowan, Romain François, Garrett Grolemund, et al. 2019. <span>“Welcome to the <span class="nocase">tidyverse</span>.”</span> <em>Journal of Open Source Software</em> 4 (43): 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>.
+</div>
+<div id="ref-knitr2014" class="csl-entry" role="listitem">
+Xie, Yihui. 2014. <span>“<span class="nocase">knitr</span>: A Comprehensive Tool for Reproducible Research in <span>R</span>.”</span> In <em>Implementing Reproducible Computational Research</em>, edited by Victoria Stodden, Friedrich Leisch, and Roger D. Peng. Chapman; Hall/CRC.
+</div>
+<div id="ref-knitr2015" class="csl-entry" role="listitem">
+———. 2015. <em>Dynamic Documents with <span>R</span> and Knitr</em>. 2nd ed. Boca Raton, Florida: Chapman; Hall/CRC. <a href="https://yihui.org/knitr/">https://yihui.org/knitr/</a>.
+</div>
+<div id="ref-knitr2024" class="csl-entry" role="listitem">
+———. 2024. <em><span class="nocase">knitr</span>: A General-Purpose Package for Dynamic Report Generation in r</em>. <a href="https://yihui.org/knitr/">https://yihui.org/knitr/</a>.
+</div>
+<div id="ref-rmarkdown2018" class="csl-entry" role="listitem">
+Xie, Yihui, J. J. Allaire, and Garrett Grolemund. 2018. <em>R Markdown: The Definitive Guide</em>. Boca Raton, Florida: Chapman; Hall/CRC. <a href="https://bookdown.org/yihui/rmarkdown">https://bookdown.org/yihui/rmarkdown</a>.
+</div>
+<div id="ref-rmarkdown2020" class="csl-entry" role="listitem">
+Xie, Yihui, Christophe Dervieux, and Emily Riederer. 2020. <em>R Markdown Cookbook</em>. Boca Raton, Florida: Chapman; Hall/CRC. <a href="https://bookdown.org/yihui/rmarkdown-cookbook">https://bookdown.org/yihui/rmarkdown-cookbook</a>.
+</div>
+</div></section></div></main>
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
@@ -611,25 +1100,66 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         }
       };
     }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
+      const annoteTargets = window.document.querySelectorAll('.code-annotation-anchor');
+      for (let i=0; i<annoteTargets.length; i++) {
+        const annoteTarget = annoteTargets[i];
+        const targetCell = annoteTarget.getAttribute("data-target-cell");
+        const targetAnnotation = annoteTarget.getAttribute("data-target-annotation");
+        const contentFn = () => {
+          const content = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          if (content) {
+            const tipContent = content.cloneNode(true);
+            tipContent.classList.add("code-annotation-tip-content");
+            return tipContent.outerHTML;
           }
-        });
+        }
+        const config = {
+          allowHTML: true,
+          content: contentFn,
+          onShow: (instance) => {
+            selectCodeLines(instance.reference);
+            instance.reference.classList.add('code-annotation-active');
+            window.tippy.hideAll();
+          },
+          onHide: (instance) => {
+            unselectCodeLines();
+            instance.reference.classList.remove('code-annotation-active');
+          },
+          maxWidth: 300,
+          delay: [50, 0],
+          duration: [200, 0],
+          offset: [5, 10],
+          arrow: true,
+          trigger: 'click',
+          appendTo: function(el) {
+            return el.parentElement.parentElement.parentElement;
+          },
+          interactive: true,
+          interactiveBorder: 10,
+          theme: 'quarto',
+          placement: 'right',
+          positionFixed: true,
+          popperOptions: {
+            modifiers: [
+            {
+              name: 'flip',
+              options: {
+                flipVariations: false, // true by default
+                allowedAutoPlacements: ['right'],
+                fallbackPlacements: ['right', 'top', 'top-start', 'top-end', 'bottom', 'bottom-start', 'bottom-end', 'left'],
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                mainAxis: false,
+                altAxis: false
+              }
+            }
+            ]        
+          }      
+        };
+        window.tippy(annoteTarget, config); 
       }
   const findCites = (el) => {
     const parentEl = el.parentElement;
